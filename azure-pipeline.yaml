@@ -1,35 +1,16 @@
 trigger:
-- master
+- main
 
 pool:
   vmImage: ubuntu-latest
 
-variables:
-- group: "SECURE_TOKENS"
-- name: snyk_token
-  value: $[variables.SNYKTOKEN]
-- name: sonar_token
-  value: $[variables.SONARTOKEN]
-
 steps:
 - script: |
-    mvn verify package sonar:sonar -Dsonar.host.url=https://sonarcloud.io/ -Dsonar.organization=azuredevopsdevsecopsorg -Dsonar.projectKey=azuredevopsdevsecopsprojectkey -Dsonar.login=$(sonar_token)
-  displayName: "Integrate SAST using SonarCloud to populate code coverage and secure pipeline variable in Azure DevOps DevSecOps Pipeline"
-
-- script: |
-    SNYK_TOKEN=$(snyk_token)
-    export SNYK_TOKEN
-    mvn snyk:test -fn 
-  displayName: "Integrate SCA scan using Snyk in ADO DevSecOps Pipeline"
-
-- script: |
-      wget https://github.com/zaproxy/zaproxy/releases/download/v2.11.1/ZAP_2.11.1_Linux.tar.gz
-      tar -xvf ZAP_2.11.1_Linux.tar.gz
-      cd ZAP_2.11.1
-      ./zap.sh -cmd -quickurl https://www.example.com -quickprogress -quickout /home/vsts/work/1/a/zap_report.html 
-  displayName: "Integrate DAST using OWASP ZAP in ADO DevSecOps Pipeline"
-
-- task: PublishBuildArtifacts@1
-  inputs:
-    pathToPublish: '$(Build.ArtifactStagingDirectory)'
-    artifactName: zap_report.html
+    mvn verify package sonar:sonar -Dsonar.host.url=https://sonarcloud.io/ -Dsonar.organization=devsecops -Dsonar.projectKey=devsecopssaini1 -Dsonar.login=d59d7203d38a824ae015fd0b9a4118a9d6db0338
+    sleep 5
+    sudo apt update
+    sudo apt install curl jq 
+    quality_status=$(curl -s -u 14ad4797c02810a818f21384add02744d3f9e34d: https://sonarcloud.io/api/qualitygates/project_status?projectKey=azuredevopsadodevsecopsprojectkey | jq -r '.projectStatus.status')
+    echo "SonarCloud analysistatus is $quality_status"; 
+    if [[ $quality_status == "ERROR" ]] ; then exit 1;fi
+  displayName: "Integrate SAST using SonarCloud to populate code coverage in Azure DevOps DevSecOps Pipeline"
